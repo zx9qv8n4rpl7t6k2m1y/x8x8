@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>sites.google.com</title>
+<title>docs.google.com</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -221,7 +221,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
 
 <!-- ══════════════════ INTRO ══════════════════ -->
 <div id="si" class="scr on">
-  <div class="logo">Colour Guess</div>
+  <div class="logo">Color Guess</div>
   <p class="tagline">A colour flashes for 5 seconds.<br>Then it disappears.<br>Recreate it from memory.</p>
   <p class="hint">5 rounds · 50 points max</p>
   <button class="play-btn" onclick="beginGame()">Play</button>
@@ -346,12 +346,20 @@ function deltaE(l1, l2) {
 function calcScore(de) {
   return Math.round(10 * Math.exp(-de / 18) * 10) / 10;
 }
-function genColor() {
-  return {
-    h: Math.floor(Math.random() * 360),
-    s: Math.floor(50 + Math.random() * 50),
-    b: Math.floor(38 + Math.random() * 50)
-  };
+// Split hue wheel into 5 sectors of 72° each, shuffle order, pick
+// randomly within each — guarantees 5 visually distinct colours per game,
+// different every play.
+function generateGameColors() {
+  const sectors = [0, 72, 144, 216, 288];
+  for (let i = sectors.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [sectors[i], sectors[j]] = [sectors[j], sectors[i]];
+  }
+  return sectors.map(base => ({
+    h: (base + Math.floor(10 + Math.random() * 52)) % 360,
+    s: Math.floor(55 + Math.random() * 45),
+    b: Math.floor(40 + Math.random() * 45)
+  }));
 }
 
 const MSGS = [
@@ -380,9 +388,10 @@ function rankStr(t) {
 const THUMB_R = 14; // radius px
 
 const SL = {
-  h: { trackId:'trk-h', thumbId:'thm-h', min:0, max:359, val:180 },
-  s: { trackId:'trk-s', thumbId:'thm-s', min:0, max:100, val:50 },
-  b: { trackId:'trk-b', thumbId:'thm-b', min:0, max:100, val:50 }
+  // flip:true = min at top, max at bottom (matches natural rainbow top→bottom)
+  h: { trackId:'trk-h', thumbId:'thm-h', min:0, max:359, val:180, flip:true },
+  s: { trackId:'trk-s', thumbId:'thm-s', min:0, max:100, val:50,  flip:false },
+  b: { trackId:'trk-b', thumbId:'thm-b', min:0, max:100, val:50,  flip:false }
 };
 
 function pxToVal(sl, clientY) {
@@ -390,13 +399,18 @@ function pxToVal(sl, clientY) {
   const usable = r.height - THUMB_R * 2;
   const raw = clientY - r.top - THUMB_R;
   const pct = Math.max(0, Math.min(1, raw / usable));
-  return Math.round(sl.max - (sl.max - sl.min) * pct);
+  // flip=true: top=min, bottom=max  |  flip=false: top=max, bottom=min
+  return sl.flip
+    ? Math.round(sl.min + (sl.max - sl.min) * pct)
+    : Math.round(sl.max - (sl.max - sl.min) * pct);
 }
 function posThumb(sl) {
   const track = document.getElementById(sl.trackId);
   const thumb = document.getElementById(sl.thumbId);
-  const pct = 1 - (sl.val - sl.min) / (sl.max - sl.min);
   const usable = track.clientHeight - THUMB_R * 2;
+  const pct = sl.flip
+    ? (sl.val - sl.min) / (sl.max - sl.min)        // top=min
+    : 1 - (sl.val - sl.min) / (sl.max - sl.min);   // top=max
   thumb.style.top = (THUMB_R + pct * usable - THUMB_R) + 'px';
 }
 function refreshTracks() {
@@ -462,7 +476,7 @@ let G = { round: 0, colors: [], scores: [], guesses: [], timer: null };
 function beginGame() {
   G = {
     round: 0,
-    colors: Array.from({ length: 5 }, genColor),
+    colors: generateGameColors(),
     scores: [], guesses: [], timer: null
   };
   goTo('srsg', doReadySetGo);
@@ -470,30 +484,32 @@ function beginGame() {
 
 /* ── READY / SET / GO ────────────────────────────────── */
 function doReadySetGo() {
-  const words = ['READY', 'SET', 'GO'];
+  const words = ['READY', 'SET', 'GO!'];
   const el = document.getElementById('rsg-word');
   let i = 0;
-  el.classList.remove('visible');
 
-  function next() {
+  function showWord() {
     if (i >= words.length) {
       goTo('sm', startMemorize);
       return;
     }
-    el.classList.remove('visible');
+    // Snap invisible/small — no transition
     el.style.transition = 'none';
-    el.style.transform = 'scale(.82)';
     el.style.opacity = '0';
-    setTimeout(() => {
-      el.textContent = words[i];
-      el.style.transition = 'opacity .18s ease, transform .18s ease';
-      el.offsetHeight; // reflow
-      el.classList.add('visible');
-      i++;
-      setTimeout(next, 620);
-    }, 80);
+    el.style.transform = 'scale(0.75)';
+    el.textContent = words[i];
+    i++;
+    // Force reflow so browser registers the reset before animating
+    el.getBoundingClientRect();
+    // Animate in
+    el.style.transition = 'opacity 0.2s ease, transform 0.22s ease';
+    el.style.opacity = '1';
+    el.style.transform = 'scale(1)';
+    setTimeout(showWord, 700);
   }
-  next();
+
+  // Short delay so the screen is fully faded in before the first word
+  setTimeout(showWord, 150);
 }
 
 /* ── MEMORIZE ────────────────────────────────────────── */
