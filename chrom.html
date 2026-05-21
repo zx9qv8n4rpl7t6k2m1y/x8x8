@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>sites.google.com</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-serif;background:#111;}
+
+.scr{position:absolute;inset:0;display:none;}
+.scr.on{display:flex;}
+
+/* ─── FADE OVERLAY ─────────────────────────────────── */
+#fade{
+  position:fixed;inset:0;background:#111;
+  opacity:0;pointer-events:none;
+  transition:opacity .22s;z-index:9999;
+}
+#fade.show{opacity:1;pointer-events:all;}
+
+/* ─── INTRO ─────────────────────────────────────────── */
+#si{
+  background:#111;color:#fff;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:18px;text-align:center;padding:48px;
+}
+.logo{font-size:68px;font-weight:900;letter-spacing:-.03em;line-height:1;}
+.tagline{font-size:15px;color:rgba(255,255,255,.4);line-height:1.85;max-width:270px;}
+.hint{font-size:11px;color:rgba(255,255,255,.2);letter-spacing:.12em;text-transform:uppercase;}
+.play-btn{
+  margin-top:10px;padding:17px 60px;
+  background:#fff;color:#111;border:none;border-radius:60px;
+  font-size:15px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;font-family:inherit;
+  transition:transform .12s,opacity .15s;
+}
+.play-btn:hover{transform:translateY(-2px);opacity:.92;}
+.play-btn:active{transform:translateY(0);}
+
+/* ─── READY / SET / GO ──────────────────────────────── */
+#srsg{
+  background:#111;color:#fff;
+  flex-direction:column;align-items:center;justify-content:center;
+}
+.rsg-word{
+  font-size:96px;font-weight:900;letter-spacing:-.04em;
+  opacity:0;transform:scale(.8);
+  transition:opacity .18s ease,transform .18s ease;
+}
+.rsg-word.visible{opacity:1;transform:scale(1);}
+
+/* ─── MEMORIZE ──────────────────────────────────────── */
+#sm{flex-direction:column;justify-content:space-between;padding:30px 38px 38px;}
+.rnd-lbl{
+  font-size:14px;font-weight:600;
+  color:rgba(255,255,255,.65);letter-spacing:.02em;
+}
+.mem-bot{display:flex;justify-content:space-between;align-items:flex-end;}
+.mem-left .shade-lbl{
+  font-size:11px;font-weight:700;letter-spacing:.2em;
+  text-transform:uppercase;color:rgba(255,255,255,.5);
+  margin-bottom:14px;
+}
+.bar-wrap{width:220px;height:4px;background:rgba(255,255,255,.18);border-radius:2px;overflow:hidden;}
+.bar-fill{height:100%;background:rgba(255,255,255,.85);border-radius:2px;width:100%;}
+.cd-area{text-align:right;}
+.cd-num{font-size:92px;font-weight:900;color:rgba(255,255,255,.9);line-height:1;letter-spacing:-.05em;}
+.cd-lbl{font-size:11px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;color:rgba(255,255,255,.4);margin-top:4px;}
+
+/* ─── RECALL ────────────────────────────────────────── */
+#sr{flex-direction:row;}
+
+.sliders-panel{
+  width:162px;min-width:162px;height:100vh;
+  display:flex;
+  background:rgba(0,0,0,.22);
+  flex-shrink:0;z-index:2;
+}
+.sl-col{
+  flex:1;display:flex;
+  align-items:center;justify-content:center;
+  padding:22px 0;
+}
+.sl-track{
+  position:relative;
+  width:42px;
+  height:calc(100vh - 64px);
+  border-radius:21px;
+  cursor:pointer;
+  user-select:none;
+  touch-action:none;
+  flex-shrink:0;
+}
+.sl-thumb{
+  position:absolute;
+  left:50%;transform:translateX(-50%);
+  width:28px;height:28px;
+  border-radius:50%;
+  background:#fff;
+  box-shadow:0 2px 10px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.25);
+  pointer-events:none;
+}
+.recall-right{
+  flex:1;height:100vh;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:30px 34px;
+  position:relative;
+}
+.ok-btn{
+  align-self:flex-end;
+  padding:17px 52px;
+  background:#fff;color:#111;
+  border:none;border-radius:14px;
+  font-size:18px;font-weight:700;
+  cursor:pointer;font-family:inherit;
+  box-shadow:0 4px 22px rgba(0,0,0,.25);
+  transition:transform .12s,opacity .15s;
+}
+.ok-btn:hover{transform:translateY(-1px);opacity:.92;}
+.ok-btn:active{transform:translateY(0);}
+
+/* ─── RESULT ─────────────────────────────────────────── */
+#sres{flex-direction:row;}
+.res-left{
+  flex:1;height:100vh;
+  position:relative;
+  display:flex;flex-direction:column;
+  justify-content:flex-end;
+  padding:34px 38px;
+}
+.res-right{
+  flex:1;height:100vh;
+  position:relative;
+  display:flex;flex-direction:column;
+  justify-content:space-between;
+  padding:38px 38px 34px;
+}
+/* Gradient fade at bottom for readability */
+.res-left::after,.res-right::after{
+  content:'';
+  position:absolute;bottom:0;left:0;right:0;height:180px;
+  background:linear-gradient(to top,rgba(0,0,0,.52),transparent);
+  pointer-events:none;
+}
+.res-info{position:relative;z-index:1;}
+.res-tag{
+  font-size:10px;font-weight:700;letter-spacing:.22em;
+  text-transform:uppercase;color:rgba(255,255,255,.5);
+  margin-bottom:7px;
+}
+.res-hsb-val{
+  font-size:24px;font-weight:800;color:#fff;
+  letter-spacing:.02em;
+  text-shadow:0 1px 6px rgba(0,0,0,.25);
+}
+.score-num{
+  font-size:114px;font-weight:900;color:#fff;
+  line-height:1;letter-spacing:-.05em;
+  text-shadow:0 2px 12px rgba(0,0,0,.2);
+}
+.score-msg{
+  font-size:19px;font-weight:600;
+  color:rgba(255,255,255,.72);
+  max-width:260px;line-height:1.4;
+  margin-top:10px;
+  text-shadow:0 1px 6px rgba(0,0,0,.2);
+}
+.res-bot{
+  display:flex;justify-content:space-between;
+  align-items:flex-end;
+  position:relative;z-index:1;
+}
+.next-circle{
+  width:58px;height:58px;border-radius:50%;
+  background:#fff;border:none;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  font-size:22px;font-weight:700;color:#111;
+  box-shadow:0 4px 18px rgba(0,0,0,.3);
+  transition:transform .12s,opacity .15s;
+  flex-shrink:0;
+}
+.next-circle:hover{transform:scale(1.07);}
+.next-circle:active{transform:scale(.97);}
+
+/* ─── FINAL SCORE ────────────────────────────────────── */
+#sfin{
+  background:#111;color:#fff;
+  flex-direction:column;align-items:center;justify-content:center;
+  gap:26px;padding:40px 32px;text-align:center;
+}
+.fin-lbl{font-size:11px;font-weight:600;letter-spacing:.22em;text-transform:uppercase;color:rgba(255,255,255,.3);}
+.fin-score{font-size:92px;font-weight:900;line-height:1;letter-spacing:-.03em;}
+.fin-rank{font-size:13px;color:rgba(255,255,255,.35);letter-spacing:.1em;text-transform:uppercase;margin-top:6px;}
+.fin-swatches{display:flex;gap:7px;width:100%;max-width:400px;}
+.fin-sw{flex:1;height:74px;border-radius:8px;position:relative;overflow:hidden;}
+.fin-sw-g{position:absolute;bottom:0;left:0;right:0;height:50%;}
+.fin-rows{width:100%;max-width:400px;display:flex;flex-direction:column;gap:9px;}
+.fin-row{display:flex;align-items:center;gap:12px;font-size:12px;}
+.fin-rl{width:54px;color:rgba(255,255,255,.3);}
+.fin-rb{flex:1;height:3px;background:rgba(255,255,255,.08);border-radius:2px;overflow:hidden;}
+.fin-rf{height:100%;border-radius:2px;transition:width .7s ease;}
+.fin-rs{width:32px;text-align:right;font-weight:700;}
+.fin-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:400px;}
+.fin-btn{
+  width:100%;padding:16px;border:none;border-radius:60px;
+  font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  cursor:pointer;font-family:inherit;transition:opacity .15s;
+}
+.fin-btn.white{background:#fff;color:#111;}
+.fin-btn.white:hover{opacity:.9;}
+.fin-btn.ghost{background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);}
+.fin-btn.ghost:hover{opacity:.8;}
+</style>
+</head>
+<body>
+
+<div id="fade"></div>
+
+<!-- ══════════════════ INTRO ══════════════════ -->
+<div id="si" class="scr on">
+  <div class="logo">Colour Guess</div>
+  <p class="tagline">A colour flashes for 5 seconds.<br>Then it disappears.<br>Recreate it from memory.</p>
+  <p class="hint">5 rounds · 50 points max</p>
+  <button class="play-btn" onclick="beginGame()">Play</button>
+</div>
+
+<!-- ══════════════════ READY / SET / GO ══════════════════ -->
+<div id="srsg" class="scr">
+  <div class="rsg-word" id="rsg-word">READY</div>
+</div>
+
+<!-- ══════════════════ MEMORIZE ══════════════════ -->
+<div id="sm" class="scr">
+  <div class="rnd-lbl" id="mem-rnd">1 / 5</div>
+  <div class="mem-bot">
+    <div class="mem-left">
+      <div class="shade-lbl">Memorize this shade</div>
+      <div class="bar-wrap"><div class="bar-fill" id="bar-fill"></div></div>
+    </div>
+    <div class="cd-area">
+      <div class="cd-num" id="cd-num">5.00</div>
+      <div class="cd-lbl">Seconds left</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ RECALL ══════════════════ -->
+<div id="sr" class="scr">
+  <!-- Three vertical slider columns -->
+  <div class="sliders-panel">
+    <div class="sl-col">
+      <div class="sl-track" id="trk-h">
+        <div class="sl-thumb" id="thm-h"></div>
+      </div>
+    </div>
+    <div class="sl-col">
+      <div class="sl-track" id="trk-s">
+        <div class="sl-thumb" id="thm-s"></div>
+      </div>
+    </div>
+    <div class="sl-col">
+      <div class="sl-track" id="trk-b">
+        <div class="sl-thumb" id="thm-b"></div>
+      </div>
+    </div>
+  </div>
+  <!-- Live color area -->
+  <div class="recall-right">
+    <div class="rnd-lbl" id="rec-rnd">1 / 5</div>
+    <button class="ok-btn" onclick="submitGuess()">OK</button>
+  </div>
+</div>
+
+<!-- ══════════════════ RESULT ══════════════════ -->
+<div id="sres" class="scr">
+  <!-- Left: your selection -->
+  <div class="res-left" id="rl">
+    <div class="res-info">
+      <div class="res-tag">Your selection</div>
+      <div class="res-hsb-val" id="r-your">H180 S50 B50</div>
+    </div>
+  </div>
+  <!-- Right: original + score -->
+  <div class="res-right" id="rr">
+    <div>
+      <div class="score-num" id="r-score">3.85</div>
+      <div class="score-msg" id="r-msg">Close enough to feel it, not close enough to keep it.</div>
+    </div>
+    <div class="res-bot">
+      <div class="res-info">
+        <div class="res-tag">Original</div>
+        <div class="res-hsb-val" id="r-orig">H275 S57 B47</div>
+      </div>
+      <button class="next-circle" id="next-btn" onclick="nextRound()">→</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════ FINAL SCORE ══════════════════ -->
+<div id="sfin" class="scr">
+  <div>
+    <div class="fin-lbl">Final score</div>
+    <div class="fin-score" id="fin-score">0.0</div>
+    <div class="fin-lbl" style="margin-top:3px;">/ 50.0</div>
+    <div class="fin-rank" id="fin-rank"></div>
+  </div>
+  <div class="fin-swatches" id="fin-swatches"></div>
+  <div class="fin-rows" id="fin-rows"></div>
+  <div class="fin-btns">
+    <button class="fin-btn white" onclick="beginGame()">Play again</button>
+    <button class="fin-btn ghost" onclick="showIntroFn()">Menu</button>
+  </div>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════
+   COLOR MATH
+═══════════════════════════════════════════ */
+function hsbToRgb(h, s, b) {
+  s /= 100; b /= 100;
+  if (s === 0) { const v = Math.round(b * 255); return [v, v, v]; }
+  const k = n => (n + h / 60) % 6;
+  const f = n => b * (1 - s * Math.max(0, Math.min(k(n), 4 - k(n), 1)));
+  return [Math.round(f(5)*255), Math.round(f(3)*255), Math.round(f(1)*255)];
+}
+const rgbCss = (r,g,b) => `rgb(${r},${g},${b})`;
+const hsbCss = (h,s,b) => { const [r,g,bv]=hsbToRgb(h,s,b); return rgbCss(r,g,bv); };
+
+function rgbToLab(r, g, b) {
+  let [rl,gl,bl] = [r,g,b].map(c => {
+    c /= 255;
+    return c > .04045 ? ((c + .055) / 1.055) ** 2.4 : c / 12.92;
+  });
+  const X = rl*.4124564 + gl*.3575761 + bl*.1804375;
+  const Y = rl*.2126729 + gl*.7151522 + bl*.0721750;
+  const Z = rl*.0193339 + gl*.1191920 + bl*.9503041;
+  const f = t => t > .008856 ? Math.cbrt(t) : 7.787*t + 16/116;
+  return [116*f(Y) - 16, 500*(f(X/.95047) - f(Y)), 200*(f(Y) - f(Z/1.08883))];
+}
+function deltaE(l1, l2) {
+  return Math.sqrt((l1[0]-l2[0])**2 + (l1[1]-l2[1])**2 + (l1[2]-l2[2])**2);
+}
+function calcScore(de) {
+  return Math.round(10 * Math.exp(-de / 18) * 10) / 10;
+}
+function genColor() {
+  return {
+    h: Math.floor(Math.random() * 360),
+    s: Math.floor(50 + Math.random() * 50),
+    b: Math.floor(38 + Math.random() * 50)
+  };
+}
+
+const MSGS = [
+  [9.5, "Flawless. You might not be human."],
+  [9.0, "Almost perfect. An extraordinary eye."],
+  [8.0, "Very close. One nudge away from perfect."],
+  [7.0, "Strong recall. Just a shade off."],
+  [5.0, "Close enough to feel it, not close enough to keep it."],
+  [3.0, "Same neighbourhood. Different house."],
+  [1.5, "Different family entirely. Keep practising."],
+  [0.0, "That's a completely different colour universe."]
+];
+function scoreMsg(s) { for (const [t,m] of MSGS) if (s >= t) return m; return MSGS[MSGS.length-1][1]; }
+function scoreClr(s) { return s>=8.5?'#7dff90':s>=7?'#c8ff66':s>=5?'#ffe84d':s>=3?'#ffaa3d':'#ff5040'; }
+function rankStr(t) {
+  if (t >= 45) return 'chromatic savant';
+  if (t >= 38) return 'keen eye';
+  if (t >= 28) return 'decent perception';
+  if (t >= 18) return 'needs calibration';
+  return 'are you sure about your screen?';
+}
+
+/* ═══════════════════════════════════════════
+   CUSTOM VERTICAL SLIDERS
+═══════════════════════════════════════════ */
+const THUMB_R = 14; // radius px
+
+const SL = {
+  h: { trackId:'trk-h', thumbId:'thm-h', min:0, max:359, val:180 },
+  s: { trackId:'trk-s', thumbId:'thm-s', min:0, max:100, val:50 },
+  b: { trackId:'trk-b', thumbId:'thm-b', min:0, max:100, val:50 }
+};
+
+function pxToVal(sl, clientY) {
+  const r = document.getElementById(sl.trackId).getBoundingClientRect();
+  const usable = r.height - THUMB_R * 2;
+  const raw = clientY - r.top - THUMB_R;
+  const pct = Math.max(0, Math.min(1, raw / usable));
+  return Math.round(sl.max - (sl.max - sl.min) * pct);
+}
+function posThumb(sl) {
+  const track = document.getElementById(sl.trackId);
+  const thumb = document.getElementById(sl.thumbId);
+  const pct = 1 - (sl.val - sl.min) / (sl.max - sl.min);
+  const usable = track.clientHeight - THUMB_R * 2;
+  thumb.style.top = (THUMB_R + pct * usable - THUMB_R) + 'px';
+}
+function refreshTracks() {
+  const h=SL.h.val, s=SL.s.val, b=SL.b.val;
+  document.getElementById('trk-h').style.background =
+    'linear-gradient(to bottom,#f00,#ff0,#0f0,#0ff,#00f,#f0f,#f00)';
+  document.getElementById('trk-s').style.background =
+    `linear-gradient(to bottom,${hsbCss(h,100,b)},${hsbCss(0,0,b)})`;
+  document.getElementById('trk-b').style.background =
+    `linear-gradient(to bottom,${hsbCss(h,s,100)},#000)`;
+}
+function updateRecallBg() {
+  document.getElementById('sr').style.background = hsbCss(SL.h.val, SL.s.val, SL.b.val);
+}
+function initSliders() {
+  Object.values(SL).forEach(sl => {
+    const track = document.getElementById(sl.trackId);
+    let active = false;
+    function move(y) {
+      sl.val = pxToVal(sl, y);
+      posThumb(sl);
+      refreshTracks();
+      updateRecallBg();
+    }
+    track.addEventListener('mousedown', e => { active = true; move(e.clientY); e.preventDefault(); });
+    document.addEventListener('mousemove', e => { if (active) move(e.clientY); });
+    document.addEventListener('mouseup', () => active = false);
+    track.addEventListener('touchstart', e => { e.preventDefault(); move(e.touches[0].clientY); }, { passive: false });
+    track.addEventListener('touchmove', e => { e.preventDefault(); move(e.touches[0].clientY); }, { passive: false });
+  });
+}
+function setSliders(h, s, b) {
+  SL.h.val = h; SL.s.val = s; SL.b.val = b;
+  Object.values(SL).forEach(posThumb);
+  refreshTracks();
+  updateRecallBg();
+}
+
+/* ═══════════════════════════════════════════
+   SCREEN MANAGER
+═══════════════════════════════════════════ */
+const ALL_SCREENS = ['si','srsg','sm','sr','sres','sfin'];
+function goTo(id, cb) {
+  const fade = document.getElementById('fade');
+  fade.style.opacity = '1';
+  fade.style.pointerEvents = 'all';
+  setTimeout(() => {
+    ALL_SCREENS.forEach(s => {
+      document.getElementById(s).classList[s === id ? 'add' : 'remove']('on');
+    });
+    if (cb) cb();
+    fade.style.opacity = '0';
+    fade.style.pointerEvents = 'none';
+  }, 230);
+}
+function showIntroFn() { goTo('si'); }
+
+/* ═══════════════════════════════════════════
+   GAME STATE
+═══════════════════════════════════════════ */
+let G = { round: 0, colors: [], scores: [], guesses: [], timer: null };
+
+function beginGame() {
+  G = {
+    round: 0,
+    colors: Array.from({ length: 5 }, genColor),
+    scores: [], guesses: [], timer: null
+  };
+  goTo('srsg', doReadySetGo);
+}
+
+/* ── READY / SET / GO ────────────────────────────────── */
+function doReadySetGo() {
+  const words = ['READY', 'SET', 'GO'];
+  const el = document.getElementById('rsg-word');
+  let i = 0;
+  el.classList.remove('visible');
+
+  function next() {
+    if (i >= words.length) {
+      goTo('sm', startMemorize);
+      return;
+    }
+    el.classList.remove('visible');
+    el.style.transition = 'none';
+    el.style.transform = 'scale(.82)';
+    el.style.opacity = '0';
+    setTimeout(() => {
+      el.textContent = words[i];
+      el.style.transition = 'opacity .18s ease, transform .18s ease';
+      el.offsetHeight; // reflow
+      el.classList.add('visible');
+      i++;
+      setTimeout(next, 620);
+    }, 80);
+  }
+  next();
+}
+
+/* ── MEMORIZE ────────────────────────────────────────── */
+function startMemorize() {
+  const c = G.colors[G.round];
+  document.getElementById('sm').style.background = hsbCss(c.h, c.s, c.b);
+  document.getElementById('mem-rnd').textContent = `${G.round + 1} / 5`;
+
+  const fill = document.getElementById('bar-fill');
+  fill.style.transition = 'none';
+  fill.style.width = '100%';
+  fill.getBoundingClientRect(); // force reflow
+  fill.style.transition = 'width 5s linear';
+  fill.style.width = '0%';
+
+  const cdEl = document.getElementById('cd-num');
+  if (G.timer) clearInterval(G.timer);
+  const t0 = Date.now();
+  G.timer = setInterval(() => {
+    const elapsed = Date.now() - t0;
+    const rem = Math.max(0, (5000 - elapsed) / 1000);
+    cdEl.textContent = rem.toFixed(2);
+    if (elapsed >= 5050) {
+      clearInterval(G.timer);
+      cdEl.textContent = '0.00';
+      setTimeout(goRecall, 260);
+    }
+  }, 30);
+}
+
+/* ── RECALL ──────────────────────────────────────────── */
+function goRecall() {
+  const randH = Math.floor(Math.random() * 360);
+  const randS = Math.floor(15 + Math.random() * 35);
+  const randB = Math.floor(15 + Math.random() * 35);
+  document.getElementById('rec-rnd').textContent = `${G.round + 1} / 5`;
+  goTo('sr', () => {
+    setSliders(randH, randS, randB);
+  });
+}
+
+/* ── SUBMIT ──────────────────────────────────────────── */
+function submitGuess() {
+  const h = SL.h.val, s = SL.s.val, b = SL.b.val;
+  G.guesses.push({ h, s, b });
+  const tgt = G.colors[G.round];
+  const de = deltaE(
+    rgbToLab(...hsbToRgb(tgt.h, tgt.s, tgt.b)),
+    rgbToLab(...hsbToRgb(h, s, b))
+  );
+  const score = calcScore(de);
+  G.scores.push(score);
+
+  goTo('sres', () => {
+    document.getElementById('rl').style.background = hsbCss(h, s, b);
+    document.getElementById('rr').style.background = hsbCss(tgt.h, tgt.s, tgt.b);
+    document.getElementById('r-your').textContent = `H${h} S${s} B${b}`;
+    document.getElementById('r-orig').textContent = `H${tgt.h} S${tgt.s} B${tgt.b}`;
+    document.getElementById('r-msg').textContent = scoreMsg(score);
+    document.getElementById('next-btn').textContent = G.round === 4 ? '✓' : '→';
+
+    // Count-up animation
+    const numEl = document.getElementById('r-score');
+    numEl.textContent = '0.00';
+    let cur = 0;
+    const step = score / 22;
+    const anim = setInterval(() => {
+      cur = Math.min(cur + step, score);
+      numEl.textContent = cur.toFixed(2);
+      if (cur >= score) { numEl.textContent = score.toFixed(2); clearInterval(anim); }
+    }, 18);
+  });
+}
+
+/* ── NEXT ROUND ──────────────────────────────────────── */
+function nextRound() {
+  G.round++;
+  if (G.round >= 5) showFinal();
+  else goTo('sm', startMemorize);
+}
+
+/* ── FINAL SCORE ─────────────────────────────────────── */
+function showFinal() {
+  const total = Math.round(G.scores.reduce((a, c) => a + c, 0) * 10) / 10;
+  goTo('sfin', () => {
+    const sc = document.getElementById('fin-score');
+    sc.textContent = total.toFixed(1);
+    sc.style.color = scoreClr(total / 5);
+    document.getElementById('fin-rank').textContent = rankStr(total);
+
+    const sw = document.getElementById('fin-swatches');
+    sw.innerHTML = '';
+    G.colors.forEach((c, i) => {
+      const g = G.guesses[i];
+      const d = document.createElement('div'); d.className = 'fin-sw';
+      d.style.background = hsbCss(c.h, c.s, c.b);
+      const gd = document.createElement('div'); gd.className = 'fin-sw-g';
+      gd.style.background = hsbCss(g.h, g.s, g.b);
+      d.appendChild(gd); sw.appendChild(d);
+    });
+
+    document.getElementById('fin-rows').innerHTML = G.scores.map((s, i) => `
+      <div class="fin-row">
+        <span class="fin-rl">Round ${i+1}</span>
+        <div class="fin-rb"><div class="fin-rf" style="width:${s*10}%;background:${scoreClr(s)};"></div></div>
+        <span class="fin-rs" style="color:${scoreClr(s)}">${s.toFixed(1)}</span>
+      </div>`).join('');
+  });
+}
+
+/* ═══════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════ */
+initSliders();
+setSliders(180, 50, 50);
+</script>
+</body>
+</html>
