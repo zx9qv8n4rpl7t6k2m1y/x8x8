@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>docs.google.com</title>
+<title>google.com</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
@@ -73,21 +73,20 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
 #sr{flex-direction:row;}
 
 .sliders-panel{
-  width:162px;min-width:162px;height:100vh;
+  width:168px;min-width:168px;height:100vh;
   display:flex;
-  background:rgba(0,0,0,.22);
   flex-shrink:0;z-index:2;
 }
 .sl-col{
   flex:1;display:flex;
   align-items:center;justify-content:center;
-  padding:22px 0;
+  padding:14px 0;
 }
 .sl-track{
   position:relative;
-  width:42px;
-  height:calc(100vh - 64px);
-  border-radius:21px;
+  width:50px;
+  height:calc(100vh - 28px);
+  border-radius:25px;
   cursor:pointer;
   user-select:none;
   touch-action:none;
@@ -96,10 +95,10 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
 .sl-thumb{
   position:absolute;
   left:50%;transform:translateX(-50%);
-  width:28px;height:28px;
+  width:30px;height:30px;
   border-radius:50%;
   background:#fff;
-  box-shadow:0 2px 10px rgba(0,0,0,.45),0 0 0 2px rgba(255,255,255,.25);
+  box-shadow:0 2px 12px rgba(0,0,0,.5),0 0 0 2px rgba(255,255,255,.3);
   pointer-events:none;
 }
 .recall-right{
@@ -108,6 +107,19 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
   justify-content:space-between;
   padding:30px 34px;
   position:relative;
+}
+/* Slider name — shows on drag, fades out — top-left of colour area */
+.sl-label{
+  position:absolute;
+  top:80px;
+  left:34px;
+  font-size:26px;font-weight:800;
+  letter-spacing:.28em;text-transform:uppercase;
+  color:rgba(255,255,255,.85);
+  pointer-events:none;
+  opacity:0;
+  transition:opacity .5s ease;
+  line-height:1;
 }
 .ok-btn{
   align-self:flex-end;
@@ -212,7 +224,17 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
 .fin-btn.white{background:#fff;color:#111;}
 .fin-btn.white:hover{opacity:.9;}
 .fin-btn.ghost{background:transparent;color:rgba(255,255,255,.5);border:1px solid rgba(255,255,255,.15);}
-.fin-btn.ghost:hover{opacity:.8;}
+/* ─── DIFFICULTY TOGGLE ─────────────────────────────── */
+.diff-row{display:flex;gap:10px;}
+.diff-btn{
+  padding:12px 28px;
+  background:transparent;color:rgba(255,255,255,.4);
+  border:1px solid rgba(255,255,255,.15);border-radius:60px;
+  font-size:13px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+  cursor:pointer;font-family:inherit;transition:all .15s;
+}
+.diff-btn.active{background:#fff;color:#111;border-color:#fff;}
+.diff-btn:hover:not(.active){color:rgba(255,255,255,.7);border-color:rgba(255,255,255,.3);}
 </style>
 </head>
 <body>
@@ -222,8 +244,12 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
 <!-- ══════════════════ INTRO ══════════════════ -->
 <div id="si" class="scr on">
   <div class="logo">Color Guess</div>
-  <p class="tagline">A colour flashes for 5 seconds.<br>Then it disappears.<br>Recreate it from memory.</p>
+  <p class="tagline">A colour flashes for a few seconds.<br>Then it disappears.<br>Recreate it from memory.</p>
   <p class="hint">5 rounds · 50 points max</p>
+  <div class="diff-row">
+    <button class="diff-btn active" id="diff-easy" onclick="setDiff('easy')">Easy — 5s</button>
+    <button class="diff-btn"        id="diff-hard" onclick="setDiff('hard')">Hard — 2s</button>
+  </div>
   <button class="play-btn" onclick="beginGame()">Play</button>
 </div>
 
@@ -270,6 +296,7 @@ html,body{width:100vw;height:100vh;overflow:hidden;font-family:'Inter',sans-seri
   <!-- Live color area -->
   <div class="recall-right">
     <div class="rnd-lbl" id="rec-rnd">1 / 5</div>
+    <div id="sl-label" class="sl-label">HUE</div>
     <button class="ok-btn" onclick="submitGuess()">OK</button>
   </div>
 </div>
@@ -344,7 +371,7 @@ function deltaE(l1, l2) {
   return Math.sqrt((l1[0]-l2[0])**2 + (l1[1]-l2[1])**2 + (l1[2]-l2[2])**2);
 }
 function calcScore(de) {
-  return Math.round(10 * Math.exp(-de / 18) * 10) / 10;
+  return Math.round(10 * Math.exp(-de / 65) * 10) / 10;
 }
 // Split hue wheel into 5 sectors of 72° each, shuffle order, pick
 // randomly within each — guarantees 5 visually distinct colours per game,
@@ -389,9 +416,9 @@ const THUMB_R = 14; // radius px
 
 const SL = {
   // flip:true = min at top, max at bottom (matches natural rainbow top→bottom)
-  h: { trackId:'trk-h', thumbId:'thm-h', min:0, max:359, val:180, flip:true },
-  s: { trackId:'trk-s', thumbId:'thm-s', min:0, max:100, val:50,  flip:false },
-  b: { trackId:'trk-b', thumbId:'thm-b', min:0, max:100, val:50,  flip:false }
+  h: { trackId:'trk-h', thumbId:'thm-h', min:0, max:359, val:180, flip:true,  label:'HUE' },
+  s: { trackId:'trk-s', thumbId:'thm-s', min:0, max:100, val:50,  flip:false, label:'SATURATION' },
+  b: { trackId:'trk-b', thumbId:'thm-b', min:0, max:100, val:50,  flip:false, label:'BRIGHTNESS' }
 };
 
 function pxToVal(sl, clientY) {
@@ -426,6 +453,23 @@ function updateRecallBg() {
   document.getElementById('sr').style.background = hsbCss(SL.h.val, SL.s.val, SL.b.val);
 }
 function initSliders() {
+  const labelEl = document.getElementById('sl-label');
+  let labelTimer = null;
+
+  function showLabel(text) {
+    clearTimeout(labelTimer);
+    labelEl.textContent = text;
+    labelEl.style.transition = 'none';
+    labelEl.style.opacity = '1';
+  }
+  function scheduleHide() {
+    clearTimeout(labelTimer);
+    labelTimer = setTimeout(() => {
+      labelEl.style.transition = 'opacity .5s ease';
+      labelEl.style.opacity = '0';
+    }, 1200);
+  }
+
   Object.values(SL).forEach(sl => {
     const track = document.getElementById(sl.trackId);
     let active = false;
@@ -435,11 +479,30 @@ function initSliders() {
       refreshTracks();
       updateRecallBg();
     }
-    track.addEventListener('mousedown', e => { active = true; move(e.clientY); e.preventDefault(); });
-    document.addEventListener('mousemove', e => { if (active) move(e.clientY); });
-    document.addEventListener('mouseup', () => active = false);
-    track.addEventListener('touchstart', e => { e.preventDefault(); move(e.touches[0].clientY); }, { passive: false });
-    track.addEventListener('touchmove', e => { e.preventDefault(); move(e.touches[0].clientY); }, { passive: false });
+    track.addEventListener('mousedown', e => {
+      active = true;
+      showLabel(sl.label);
+      move(e.clientY);
+      e.preventDefault();
+    });
+    document.addEventListener('mousemove', e => {
+      if (active) move(e.clientY);
+    });
+    document.addEventListener('mouseup', () => {
+      if (active) { active = false; scheduleHide(); }
+    });
+    track.addEventListener('touchstart', e => {
+      e.preventDefault();
+      showLabel(sl.label);
+      move(e.touches[0].clientY);
+    }, { passive: false });
+    track.addEventListener('touchmove', e => {
+      e.preventDefault();
+      move(e.touches[0].clientY);
+    }, { passive: false });
+    track.addEventListener('touchend', () => {
+      scheduleHide();
+    }, { passive: false });
   });
 }
 function setSliders(h, s, b) {
@@ -484,7 +547,7 @@ function beginGame() {
 
 /* ── READY / SET / GO ────────────────────────────────── */
 function doReadySetGo() {
-  const words = ['READY', 'SET', 'GO!'];
+  const words = ['READY', 'SET', 'GO'];
   const el = document.getElementById('rsg-word');
   let i = 0;
 
@@ -512,6 +575,13 @@ function doReadySetGo() {
   setTimeout(showWord, 150);
 }
 
+let DURATION = 5000; // ms — set by Easy/Hard toggle
+function setDiff(d) {
+  DURATION = d === 'hard' ? 2000 : 5000;
+  document.getElementById('diff-easy').classList.toggle('active', d === 'easy');
+  document.getElementById('diff-hard').classList.toggle('active', d === 'hard');
+}
+
 /* ── MEMORIZE ────────────────────────────────────────── */
 function startMemorize() {
   const c = G.colors[G.round];
@@ -521,8 +591,8 @@ function startMemorize() {
   const fill = document.getElementById('bar-fill');
   fill.style.transition = 'none';
   fill.style.width = '100%';
-  fill.getBoundingClientRect(); // force reflow
-  fill.style.transition = 'width 5s linear';
+  fill.getBoundingClientRect();
+  fill.style.transition = `width ${DURATION / 1000}s linear`;
   fill.style.width = '0%';
 
   const cdEl = document.getElementById('cd-num');
@@ -530,9 +600,9 @@ function startMemorize() {
   const t0 = Date.now();
   G.timer = setInterval(() => {
     const elapsed = Date.now() - t0;
-    const rem = Math.max(0, (5000 - elapsed) / 1000);
+    const rem = Math.max(0, (DURATION - elapsed) / 1000);
     cdEl.textContent = rem.toFixed(2);
-    if (elapsed >= 5050) {
+    if (elapsed >= DURATION + 50) {
       clearInterval(G.timer);
       cdEl.textContent = '0.00';
       setTimeout(goRecall, 260);
@@ -542,12 +612,10 @@ function startMemorize() {
 
 /* ── RECALL ──────────────────────────────────────────── */
 function goRecall() {
-  const randH = Math.floor(Math.random() * 360);
-  const randS = Math.floor(15 + Math.random() * 35);
-  const randB = Math.floor(15 + Math.random() * 35);
   document.getElementById('rec-rnd').textContent = `${G.round + 1} / 5`;
   goTo('sr', () => {
-    setSliders(randH, randS, randB);
+    // Always start from the middle so thumbs sit at centre of each track
+    setSliders(180, 50, 50);
   });
 }
 
